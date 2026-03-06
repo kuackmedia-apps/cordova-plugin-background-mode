@@ -51,8 +51,8 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
 - (void) pluginInitialize
 {
     enabled = NO;
+    audioSessionConfigured = NO;
     [self configureAudioPlayer];
-    [self configureAudioSession];
     [self observeLifeCycle];
 }
 
@@ -92,6 +92,11 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
     if (enabled)
         return;
 
+    if (!audioSessionConfigured) {
+        [self configureAudioSession];
+        audioSessionConfigured = YES;
+    }
+
     enabled = YES;
     [self execCallback:command];
 }
@@ -120,6 +125,11 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
 {
     if (!enabled)
         return;
+
+    if (!audioSessionConfigured) {
+        [self configureAudioSession];
+        audioSessionConfigured = YES;
+    }
 
     [audioPlayer play];
     [self fireEvent:kAPPBackgroundEventActivate];
