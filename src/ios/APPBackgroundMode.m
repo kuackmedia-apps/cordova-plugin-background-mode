@@ -209,8 +209,21 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
  */
 - (void) handleAudioSessionInterruption:(NSNotification*)notification
 {
-    [self fireEvent:kAPPBackgroundEventDeactivate];
-    [self keepAwake];
+    NSDictionary *info = notification.userInfo;
+    if (!info) return;
+
+    AVAudioSessionInterruptionType type = [info[AVAudioSessionInterruptionTypeKey] unsignedIntegerValue];
+
+    if (type == AVAudioSessionInterruptionTypeBegan) {
+        [self fireEvent:kAPPBackgroundEventDeactivate];
+        return;
+    }
+
+    // InterruptionTypeEnded — only restart if enabled
+    if (enabled && !audioPlayer.isPlaying) {
+        [audioPlayer play];
+        [self fireEvent:kAPPBackgroundEventActivate];
+    }
 }
 
 /**
