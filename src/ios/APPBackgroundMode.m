@@ -227,6 +227,54 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
 }
 
 /**
+ * Start a native inactivity timer. Fires JS cleanup when it expires.
+ */
+- (void) startInactivityTimer:(CDVInvokedUrlCommand*)command
+{
+    NSNumber* timeoutMs = [command argumentAtIndex:0];
+    NSTimeInterval seconds = [timeoutMs doubleValue] / 1000.0;
+
+    [self cancelInactivityTimerInternal];
+
+    NSLog(@"BackgroundMode: starting inactivity timer (%.0fs)", seconds);
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        inactivityTimer = [NSTimer scheduledTimerWithTimeInterval:seconds
+                                                          target:self
+                                                        selector:@selector(inactivityTimerFired)
+                                                        userInfo:nil
+                                                         repeats:NO];
+    });
+
+    [self execCallback:command];
+}
+
+/**
+ * Cancel the native inactivity timer.
+ */
+- (void) cancelInactivityTimer:(CDVInvokedUrlCommand*)command
+{
+    [self cancelInactivityTimerInternal];
+    [self execCallback:command];
+}
+
+- (void) cancelInactivityTimerInternal
+{
+    if (inactivityTimer) {
+        NSLog(@"BackgroundMode: cancelling inactivity timer");
+        [inactivityTimer invalidate];
+        inactivityTimer = nil;
+    }
+}
+
+- (void) inactivityTimerFired
+{
+    NSLog(@"BackgroundMode: inactivity timer fired — triggering JS cleanup");
+    inactivityTimer = nil;
+    [self.commandDelegate evalJs:@"V.app.BackgroundHandler.triggerCleanup()"];
+}
+
+/**
  * Find out if the app runs inside the webkit powered webview.
  */
 + (BOOL) isRunningWebKit

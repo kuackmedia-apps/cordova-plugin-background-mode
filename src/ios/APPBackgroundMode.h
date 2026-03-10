@@ -26,11 +26,15 @@
     AVAudioPlayer* audioPlayer;
     BOOL enabled;
     BOOL audioSessionConfigured;
+    NSTimer* inactivityTimer;
 }
 
 // Activate the background mode
 - (void) enable:(CDVInvokedUrlCommand*)command;
 // Deactivate the background mode
 - (void) disable:(CDVInvokedUrlCommand*)command;
+// Inactivity timer for auto-cleanup in background
+- (void) startInactivityTimer:(CDVInvokedUrlCommand*)command;
+- (void) cancelInactivityTimer:(CDVInvokedUrlCommand*)command;
 
 @end
