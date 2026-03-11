@@ -52,6 +52,7 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
 {
     enabled = NO;
     audioSessionConfigured = NO;
+    playbackPaused = NO;
     [self configureAudioPlayer];
     [self observeLifeCycle];
 }
@@ -115,6 +116,19 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
     [self execCallback:command];
 }
 
+/**
+ * Set playback paused state from JS.
+ * When paused, keepAwake will NOT play the silent audio,
+ * preventing iOS from flipping the lock screen to "playing".
+ */
+- (void) setPlaybackPaused:(CDVInvokedUrlCommand*)command
+{
+    NSNumber* paused = [command argumentAtIndex:0];
+    playbackPaused = [paused boolValue];
+    NSLog(@"BackgroundMode: setPlaybackPaused = %@", playbackPaused ? @"YES" : @"NO");
+    [self execCallback:command];
+}
+
 #pragma mark -
 #pragma mark Core
 
@@ -131,7 +145,11 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
         audioSessionConfigured = YES;
     }
 
-    [audioPlayer play];
+    if (!playbackPaused) {
+        [audioPlayer play];
+    } else {
+        NSLog(@"BackgroundMode: keepAwake skipped audioPlayer (playbackPaused)");
+    }
     [self fireEvent:kAPPBackgroundEventActivate];
 }
 
