@@ -195,16 +195,9 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
     AVAudioSession* session = [AVAudioSession
                                sharedInstance];
 
-    // Don't activate the audio session yet
-    [session setActive:NO error:NULL];
-
-    // Play music even in background and dont stop playing music
-    // even another app starts playing sound
-    [session setCategory:AVAudioSessionCategoryPlayback
-                   error:NULL];
-
-    // Active the audio session
-    [session setActive:YES error:NULL];
+    NSError* err = nil;
+    [session setCategory:AVAudioSessionCategoryPlayback error:&err];
+    if (err) NSLog(@"BGMode configureAudioSession setCategory error: %@", err);
 };
 
 #pragma mark -
@@ -237,8 +230,8 @@ NSString* const kAPPBackgroundEventDeactivate = @"deactivate";
         return;
     }
 
-    // InterruptionTypeEnded — only restart if enabled
-    if (enabled && !audioPlayer.isPlaying) {
+    // InterruptionTypeEnded — only restart if enabled and playback is not paused by user
+    if (enabled && !playbackPaused && !audioPlayer.isPlaying) {
         [audioPlayer play];
         [self fireEvent:kAPPBackgroundEventActivate];
     }
